@@ -25,18 +25,24 @@
   [rolls]
   (apply str rolls))
 
+(defn word-xf
+  "Word transducer"
+  [n bank]
+  (comp
+   (take n)
+   (map word-key)
+   (map #(get bank %))))
+
 (defn gen-password
   "Generates a password of length n based on the specified word bank."
   [n bank]
   (->> (roll)
-       (partition 5)
-       (take n)
-       (map word-key)
-       (map #(get bank %))
-       (clojure.string/join " ")))
+     (partition 5)
+     (transduce (word-xf n bank) conj)
+     (clojure.string/join " ")))
 
 (comment
-  (gen-password 10 word-bank)
+  (gen-password 20 word-bank)
   )
 
 (defn -main [& args]
