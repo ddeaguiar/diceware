@@ -11,25 +11,33 @@
        (into {}))))
 
 (def word-bank (load-bank (io/resource "wordlist.asc")))
-(def die (vec (range 1 7)))
 
-(defn roll-die
-  []
-  (let [r (rand-int 6)]
-    (get die r)))
+(defn roll
+  "Rolls a die"
+  ([]
+   (roll 6))
+  ([sides]
+   (lazy-seq (cons (inc (rand-int sides))
+                   (roll sides)))))
 
-(defn gen-word
-  [bank]
-  (let [rolls (take 5 (repeatedly roll-die))
-        key (apply str rolls)]
-    (get bank key)))
+(defn word-key
+  "Creates a word key from die rolls"
+  [rolls]
+  (apply str rolls))
 
 (defn gen-password
+  "Generates a password of length n based on the specified word bank."
   [n bank]
-  (clojure.string/join " " (take n (repeatedly #(gen-word bank)))))
+  (->> (roll)
+       (partition 5)
+       (take n)
+       (map word-key)
+       (map #(get bank %))
+       (clojure.string/join " ")))
 
 (comment
-  (gen-password 5 word-bank))
+  (gen-password 10 word-bank)
+  )
 
 (defn -main [& args]
   (println (gen-password (Integer/parseInt (first args)) word-bank)))
