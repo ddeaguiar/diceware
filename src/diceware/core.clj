@@ -1,14 +1,16 @@
-(ns diceware.core)
+(ns diceware.core
+  (:require [clojure.java.io :as io])
+  (:gen-class))
 
-(defn load-file
-  [path]
-  (with-open [r (clojure.java.io/reader path)]
+(defn load-bank
+  [resource]
+  (with-open [r (io/reader resource)]
     (->> (line-seq r)
        (map #(let [[k v] (clojure.string/split % #"\s")]
                (hash-map k v)))
        (into {}))))
 
-(def word-bank (load-file "resources/wordlist.asc"))
+(def word-bank (load-bank (io/resource "wordlist.asc")))
 (def die (vec (range 1 7)))
 
 (defn roll-die
@@ -18,8 +20,7 @@
 
 (defn gen-word
   [bank]
-  (let [rolls (for [_ (range 5)]
-                (roll-die))
+  (let [rolls (take 5 (repeatedly roll-die))
         key (apply str rolls)]
     (get bank key)))
 
@@ -27,4 +28,8 @@
   [n bank]
   (clojure.string/join " " (take n (repeatedly #(gen-word bank)))))
 
-(gen-password 5 word-bank)
+(comment
+  (gen-password 5 word-bank))
+
+(defn -main [& args]
+  (println (gen-password (Integer/parseInt (first args)) word-bank)))
